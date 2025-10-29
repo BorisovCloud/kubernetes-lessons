@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-v2
+  namespace: demo-ing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: demo
+        version: v2
+    spec:
+      containers:
+        - name: web
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=Hello from v2"
+          ports:
+            - containerPort: 5678
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"

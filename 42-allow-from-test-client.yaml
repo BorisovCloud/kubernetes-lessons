@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-test-client
+  namespace: demo-ing
+spec:
+  podSelector:
+    matchLabels:
+      app: demo
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              run: test-client
+      ports:
+        - protocol: TCP
+          port: 5678
