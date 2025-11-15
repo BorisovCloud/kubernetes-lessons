@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: webapp
+spec:
+  selector:
+    matchLabels:
+      app: webapp
+  serviceName: "webapp-service"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: nginx:1.24
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: webapp-storage
+          mountPath: /usr/share/nginx/html
+        command: ["/bin/sh", "-c"]
+        args: 
+        - echo "Hello from $(hostname) - $(date)" >> /usr/share/nginx/html/index.html && nginx -g 'daemon off;'
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+  volumeClaimTemplates:
+  - metadata:
+      name: webapp-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Mi
+      storageClassName: csi-hostpath-sc-retain

@@ -1,0 +1,20 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-ephemeral-storage
+spec:
+  containers:
+    - image: busybox
+      name: app
+      command:
+        - "/bin/sh"
+        - "-c"
+        - while true; do echo $(date) >> /test.txt; sleep 10; done
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
