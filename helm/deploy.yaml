@@ -1,0 +1,57 @@
+name: "Deploy go-app-demo to AKS cluster"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  HELM_CHART_PATH: helm/go-app-demo
+  IMAGE_NAME: go-app-demo
+  HELM_RELEASE: go-app-demo
+  HELM_NAMESPACE: go-app-demo
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Extract version
+        id: version
+        run: |
+          RAW_VERSION=$(cat VERSION)
+          VERSION=$(echo $RAW_VERSION | sed 's/-SNAPSHOT//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Azure Login with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Deploy go-app-demo Helm chart
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE }} ${{ env.HELM_CHART_PATH }} \
+            --namespace ${{ env.HELM_NAMESPACE }} \
+            --create-namespace \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ steps.version.outputs.version }} \
+            --set imageCredentials.username=${{ secrets.DOCKERHUB_USERNAME }} \
+            --set imageCredentials.password=${{ secrets.DOCKERHUB_TOKEN }}

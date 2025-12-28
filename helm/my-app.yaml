@@ -1,0 +1,87 @@
+---
+# Source: go-app-demo/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: go-app-demo-image-pull-secret
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJodHRwczovL2luZGV4LmRvY2tlci5pby92MS8iOnsidXNlcm5hbWUiOiJ0ZW1wbGF0ZXVzZXIiLCJwYXNzd29yZCI6InRlbXBsYXRlcGFzcyIsImVtYWlsIjoia29uZHJhdG92aWNoQG1haWwuY29tIiwiYXV0aCI6ImRHVnRjR3hoZEdWMWMyVnlPblJsYlhCc1lYUmxjR0Z6Y3c9PSJ9fX0=
+---
+# Source: go-app-demo/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-go-app-demo
+  labels:
+    helm.sh/chart: go-app-demo-0.1.0
+    app.kubernetes.io/name: go-app-demo
+    app.kubernetes.io/instance: my-app
+    app.kubernetes.io/version: 1.0.0
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: go-app-demo
+    app.kubernetes.io/instance: my-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# Source: go-app-demo/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-app-demo
+  labels:
+    helm.sh/chart: go-app-demo-0.1.0
+    app.kubernetes.io/name: go-app-demo
+    app.kubernetes.io/instance: my-app
+    app.kubernetes.io/version: 1.0.0
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: go-app-demo
+      app.kubernetes.io/instance: my-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: go-app-demo
+        app.kubernetes.io/instance: my-app
+    spec:
+      imagePullSecrets:
+        - name: go-app-demo-image-pull-secret
+      containers:
+        - name: go-app-demo
+          image: "kondratovicz/go-app-demo:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 250m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
