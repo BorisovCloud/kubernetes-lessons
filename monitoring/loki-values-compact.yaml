@@ -2,6 +2,9 @@ deploymentMode: SingleBinary
 
 loki:
   auth_enabled: false
+  commonConfig:
+    path_prefix: /var/loki
+    replication_factor: 1
   storage:
     type: filesystem
     bucketNames:
@@ -20,6 +23,12 @@ loki:
 
 singleBinary:
   replicas: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+
+lokiCanary:
+  enabled: true
 
 read:
   replicas: 0
@@ -28,10 +37,8 @@ write:
 backend:
   replicas: 0
 
-persistence:
-  enabled: true
-  size: 10Gi
+chunksCache:
+  enabled: false
 
-service:
-  type: ClusterIP
-  port: 3100
+resultsCache:
+  enabled: false
