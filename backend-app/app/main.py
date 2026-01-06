@@ -19,7 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FastAPI Backend with PostgreSQL",
     description="A simple REST API for storing and retrieving data from PostgreSQL",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan
 )
 
@@ -41,7 +41,7 @@ async def root():
     """Root endpoint."""
     return {
         "message": "FastAPI Backend with PostgreSQL",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "docs": "/docs",
         "redoc": "/redoc"
     }

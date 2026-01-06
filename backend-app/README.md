@@ -1,12 +1,16 @@
 # FastAPI Backend with PostgreSQL
 
-A simple REST API built with FastAPI for storing and retrieving data from a PostgreSQL database.
+A REST API built with FastAPI for tracking financial records (income and expenses) with PostgreSQL database.
 
 ## Features
 
 - ✅ RESTful API with FastAPI
 - ✅ PostgreSQL database integration with SQLAlchemy ORM
-- ✅ CRUD operations for items
+- ✅ Financial record tracking (income/expense)
+- ✅ Category classification (food, car, rent)
+- ✅ Precise currency handling with Decimal type
+- ✅ Filtering by category and record type
+- ✅ CRUD operations with validation
 - ✅ Request/response validation with Pydantic
 - ✅ Automatic API documentation (Swagger UI & ReDoc)
 - ✅ Docker containerization
@@ -128,57 +132,109 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `GET /` - Root endpoint with API information
 - `GET /health` - Health check endpoint
 
-### Items
+### Financial Records
 
-- `POST /items/` - Create a new item
-- `GET /items/` - List all items (with pagination)
-- `GET /items/{item_id}` - Get a specific item by ID
-- `PUT /items/{item_id}` - Update an item
-- `DELETE /items/{item_id}` - Delete an item
+- `POST /items/` - Create a new financial record
+- `GET /items/` - List all records (with pagination and filtering)
+- `GET /items/{item_id}` - Get a specific record by ID
+- `PUT /items/{item_id}` - Update a financial record
+- `DELETE /items/{item_id}` - Delete a financial record
+
+**Query Parameters for GET /items/:**
+- `skip` - Number of items to skip (pagination)
+- `limit` - Maximum number of items to return
+- `category` - Filter by category (food, car, rent)
+- `record_type` - Filter by type (income, expense)
 
 ## API Usage Examples
 
-### Create an Item
+### Create an Expense Record
 
 ```bash
 curl -X POST "http://localhost:8000/items/" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Example Item",
-    "description": "This is a test item"
+    "name": "Grocery Shopping",
+    "description": "Weekly groceries",
+    "category": "food",
+    "record_type": "expense",
+    "sum": "150.75"
   }'
 ```
 
-### Get All Items
+### Create an Income Record
+
+```bash
+curl -X POST "http://localhost:8000/items/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Monthly Salary",
+    "description": "December salary",
+    "record_type": "income",
+    "sum": "5000.00"
+  }'
+```
+
+### Get All Records
 
 ```bash
 curl "http://localhost:8000/items/"
 ```
 
-### Get All Items with Pagination
+### Get Records with Pagination
 
 ```bash
 curl "http://localhost:8000/items/?skip=0&limit=10"
 ```
 
-### Get a Specific Item
+### Filter by Category
+
+```bash
+# Get all food expenses
+curl "http://localhost:8000/items/?category=food"
+
+# Get all car-related records
+curl "http://localhost:8000/items/?category=car"
+```
+
+### Filter by Record Type
+
+```bash
+# Get all income records
+curl "http://localhost:8000/items/?record_type=income"
+
+# Get all expenses
+curl "http://localhost:8000/items/?record_type=expense"
+```
+
+### Combined Filters
+
+```bash
+# Get food expenses only
+curl "http://localhost:8000/items/?category=food&record_type=expense"
+
+# Get rent expenses with pagination
+curl "http://localhost:8000/items/?category=rent&record_type=expense&skip=0&limit=5"
+```
+
+### Get a Specific Record
 
 ```bash
 curl "http://localhost:8000/items/1"
 ```
 
-### Update an Item
+### Update a Record
 
 ```bash
 curl -X PUT "http://localhost:8000/items/1" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Updated Item Name",
-    "description": "Updated description"
+    "name": "Updated Grocery Shopping",
+    "sum": "175.50"
   }'
 ```
 
-### Delete an Item
+### Delete a Record
 
 ```bash
 curl -X DELETE "http://localhost:8000/items/1"
@@ -191,10 +247,24 @@ curl -X DELETE "http://localhost:8000/items/1"
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INTEGER | Primary key, auto-increment |
-| name | VARCHAR(255) | Item name (required) |
-| description | TEXT | Item description (optional) |
+| name | VARCHAR(255) | Record name (required) |
+| description | TEXT | Record description (optional) |
+| category | ENUM | Category: food, car, rent (optional, indexed) |
+| record_type | ENUM | Type: income or expense (required, indexed) |
+| sum | NUMERIC(10,2) | Amount in currency (required, must be > 0) |
 | created_at | TIMESTAMP | Creation timestamp |
 | updated_at | TIMESTAMP | Last update timestamp |
+
+### Enumerations
+
+**CategoryEnum:**
+- `food` - Food and groceries
+- `car` - Car-related expenses
+- `rent` - Rent and housing
+
+**RecordTypeEnum:**
+- `income` - Income records
+- `expense` - Expense records
 
 ## Testing
 

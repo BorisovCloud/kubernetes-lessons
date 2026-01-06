@@ -1,8 +1,10 @@
 """API endpoints for items."""
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.database import get_db
+from app.models import CategoryEnum, RecordTypeEnum
 
 router = APIRouter(
     prefix="/items",
@@ -16,10 +18,13 @@ def create_item(
     db: Session = Depends(get_db)
 ):
     """
-    Create a new item.
+    Create a new financial record.
     
     - **name**: Item name (required, 1-255 characters)
     - **description**: Item description (optional)
+    - **category**: Category - food, car, or rent (optional)
+    - **record_type**: Record type - income or expense (required)
+    - **sum**: Amount in currency (required, must be positive)
     """
     return crud.create_item(db=db, item=item)
 
@@ -28,16 +33,20 @@ def create_item(
 def read_items(
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
+    category: Optional[CategoryEnum] = Query(None, description="Filter by category (food, car, rent)"),
+    record_type: Optional[RecordTypeEnum] = Query(None, description="Filter by record type (income, expense)"),
     db: Session = Depends(get_db)
 ):
     """
-    Retrieve a list of items with pagination.
+    Retrieve a list of financial records with pagination and optional filtering.
     
     - **skip**: Number of items to skip (default: 0)
     - **limit**: Maximum number of items to return (default: 100, max: 1000)
+    - **category**: Filter by category - food, car, or rent (optional)
+    - **record_type**: Filter by record type - income or expense (optional)
     """
-    items = crud.get_items(db=db, skip=skip, limit=limit)
-    total = crud.get_items_count(db=db)
+    items = crud.get_items(db=db, skip=skip, limit=limit, category=category, record_type=record_type)
+    total = crud.get_items_count(db=db, category=category, record_type=record_type)
     return schemas.ItemList(
         items=items,
         total=total,
@@ -72,11 +81,14 @@ def update_item(
     db: Session = Depends(get_db)
 ):
     """
-    Update an existing item.
+    Update an existing financial record.
     
     - **item_id**: ID of the item to update
     - **name**: New item name (optional)
     - **description**: New item description (optional)
+    - **category**: New category - food, car, or rent (optional)
+    - **record_type**: New record type - income or expense (optional)
+    - **sum**: New amount (optional, must be positive)
     """
     db_item = crud.update_item(db=db, item_id=item_id, item=item)
     if db_item is None:

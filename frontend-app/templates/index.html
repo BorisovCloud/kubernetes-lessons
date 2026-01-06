@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Records - Financial Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Financial Records</h2>
+    <a href="{{ url_for('create') }}" class="btn btn-primary">+ Create New Record</a>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+    <form method="get" action="{{ url_for('index') }}" class="filter-form">
+        <div class="filter-group">
+            <label for="category">Category:</label>
+            <select name="category" id="category" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>
+                        {{ cat|capitalize }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="record_type">Type:</label>
+            <select name="record_type" id="record_type" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                {% for type in record_types %}
+                    <option value="{{ type }}" {% if selected_record_type == type %}selected{% endif %}>
+                        {{ type|capitalize }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear Filters</a>
+        </div>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-cards">
+    <div class="card card-income">
+        <h3>Total Income</h3>
+        <p class="amount">${{ "%.2f"|format(total_income) }}</p>
+    </div>
+    <div class="card card-expense">
+        <h3>Total Expenses</h3>
+        <p class="amount">${{ "%.2f"|format(total_expense) }}</p>
+    </div>
+    <div class="card card-balance {% if balance >= 0 %}card-positive{% else %}card-negative{% endif %}">
+        <h3>Balance</h3>
+        <p class="amount">${{ "%.2f"|format(balance) }}</p>
+    </div>
+</div>
+
+<!-- Records Table -->
+<div class="records-section">
+    <h3>Records ({{ total_count }} total)</h3>
+    
+    {% if items %}
+        <div class="table-responsive">
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr class="record-row record-{{ item.record_type }}">
+                            <td>{{ item.id }}</td>
+                            <td><strong>{{ item.name }}</strong></td>
+                            <td>{{ item.description or '-' }}</td>
+                            <td>
+                                {% if item.category %}
+                                    <span class="badge badge-{{ item.category }}">{{ item.category|capitalize }}</span>
+                                {% else %}
+                                    <span class="badge badge-default">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-type badge-{{ item.record_type }}">
+                                    {{ item.record_type|capitalize }}
+                                </span>
+                            </td>
+                            <td class="amount-cell {% if item.record_type == 'income' %}positive{% else %}negative{% endif %}">
+                                {% if item.record_type == 'income' %}+{% else %}-{% endif %}${{ item.sum }}
+                            </td>
+                            <td>{{ item.created_at[:10] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No records found.</p>
+            <a href="{{ url_for('create') }}" class="btn btn-primary">Create Your First Record</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

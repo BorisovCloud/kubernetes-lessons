@@ -38,5 +38,24 @@ services:
       - ./app:/app/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+  # Flask Frontend Application
+  frontend:
+    build:
+      context: ../frontend-app
+      dockerfile: Dockerfile
+    container_name: flask-frontend
+    environment:
+      BACKEND_URL: http://api:8000
+      SECRET_KEY: dev-secret-key-for-docker
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: 8001
+      FLASK_DEBUG: "true"
+    ports:
+      - "8001:8001"
+    depends_on:
+      - api
+    volumes:
+      - ../frontend-app:/app
+
 volumes:
   postgres_data:

@@ -10,21 +10,50 @@ def get_item(db: Session, item_id: int) -> Optional[models.Item]:
     return db.query(models.Item).filter(models.Item.id == item_id).first()
 
 
-def get_items(db: Session, skip: int = 0, limit: int = 100) -> list[models.Item]:
-    """Get a list of items with pagination."""
-    return db.query(models.Item).offset(skip).limit(limit).all()
+def get_items(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    category: Optional[models.CategoryEnum] = None,
+    record_type: Optional[models.RecordTypeEnum] = None
+) -> list[models.Item]:
+    """Get a list of items with pagination and optional filtering."""
+    query = db.query(models.Item)
+    
+    # Apply filters if provided
+    if category is not None:
+        query = query.filter(models.Item.category == category)
+    if record_type is not None:
+        query = query.filter(models.Item.record_type == record_type)
+    
+    return query.offset(skip).limit(limit).all()
 
 
-def get_items_count(db: Session) -> int:
-    """Get total count of items."""
-    return db.query(func.count(models.Item.id)).scalar()
+def get_items_count(
+    db: Session,
+    category: Optional[models.CategoryEnum] = None,
+    record_type: Optional[models.RecordTypeEnum] = None
+) -> int:
+    """Get total count of items with optional filtering."""
+    query = db.query(func.count(models.Item.id))
+    
+    # Apply filters if provided
+    if category is not None:
+        query = query.filter(models.Item.category == category)
+    if record_type is not None:
+        query = query.filter(models.Item.record_type == record_type)
+    
+    return query.scalar()
 
 
 def create_item(db: Session, item: schemas.ItemCreate) -> models.Item:
     """Create a new item."""
     db_item = models.Item(
         name=item.name,
-        description=item.description
+        description=item.description,
+        category=item.category,
+        record_type=item.record_type,
+        sum=item.sum
     )
     db.add(db_item)
     db.commit()
